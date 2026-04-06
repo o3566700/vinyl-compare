@@ -53,7 +53,8 @@ def _parse_items(soup, limit=10):
         if not name:
             continue
 
-        price = extract_price(price_el.get_text(strip=True)) if price_el else None
+        price_text = price_el.get_text(strip=True) if price_el else ''
+        price = extract_price(price_text)
 
         href = link_el.get('href', '') if link_el else ''
         link = href if href.startswith('http') else BASE_URL + href
@@ -63,12 +64,15 @@ def _parse_items(soup, limit=10):
             src = img_el.get('data-src') or img_el.get('src') or ''
             img = src if src.startswith('http') else BASE_URL + src
 
+        # 洽詢 (price on request) or no price → treat as out of stock
+        in_stock = bool(price)
+
         results.append({
             'name': name,
             'price': price,
             'link': link,
             'image': img,
-            'in_stock': True,  # listing page only shows available items
+            'in_stock': in_stock,
         })
 
         if len(results) >= limit:

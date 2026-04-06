@@ -50,9 +50,12 @@ def _parse_items(soup, limit=10):
             if m:
                 price = int(float(m.group(1)))
 
-        # Sold-out check
+        # Sold-out check: element-based + text keywords
         soldout_el = card.select_one('.pt_soldout b')
-        in_stock = not (soldout_el and '已售完' in soldout_el.get_text())
+        card_text = card.get_text()
+        sold_out_keywords = ['缺貨', '售完', 'sold out', 'Sold Out']
+        in_stock = not (soldout_el and soldout_el.get_text().strip()) and \
+                   not any(kw in card_text for kw in sold_out_keywords)
 
         # Image from .pt_photo background-image style
         img = ''
