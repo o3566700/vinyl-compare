@@ -7,6 +7,7 @@ from flask import Flask, render_template, jsonify, request
 from scrapers import shanhaisan, candlelight, eslite
 from scrapers.covers import get_cover
 from scrapers import eslite_ranking as eslite_rank
+from scrapers import ranking as extra_rank
 
 app = Flask(__name__)
 
@@ -161,6 +162,42 @@ def api_eslite_ranking():
         return jsonify({'items': items, 'error': None})
     except Exception as e:
         return jsonify({'items': [], 'error': str(e)})
+
+
+# ---------------------------------------------------------------------------
+# Additional ranking endpoints (燭光 / 山海山) — 1-hour in-memory cache
+# ---------------------------------------------------------------------------
+_extra_cache: dict = {}
+_EXTRA_TTL = 3600
+
+
+def _get_extra(key, fn):
+    now = time.time()
+    if key in _extra_cache:
+        data, ts = _extra_cache[key]
+        if now - ts < _EXTRA_TTL:
+            return data
+    data = fn()
+    _extra_cache[key] = (data, now)
+    return data
+
+
+@app.route('/api/candlelight-new-ranking')
+def api_candlelight_new_ranking():
+    data = _get_extra('candlelight_new', extra_rank.candlelight_new_ranking)
+    return jsonify(data)
+
+
+@app.route('/api/candlelight-used-ranking')
+def api_candlelight_used_ranking():
+    data = _get_extra('candlelight_used', extra_rank.candlelight_used_ranking)
+    return jsonify(data)
+
+
+@app.route('/api/shanhaisan-ranking')
+def api_shanhaisan_ranking():
+    data = _get_extra('shanhaisan', extra_rank.shanhaisan_ranking)
+    return jsonify(data)
 
 
 if __name__ == '__main__':
