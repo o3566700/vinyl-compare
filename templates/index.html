@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="zh-TW" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vinyl 比價 — 黑膠唱片比價系統</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            vinyl: {
+              bg: '#0a0a0a',
+              card: '#141414',
+              border: '#2a2a2a',
+              gold: '#f59e0b',
+              'gold-light': '#fbbf24',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'system-ui', 'sans-serif'],
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #0a0a0a; }
+
+    /* Vinyl record spinning animation */
+    @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .spin-slow { animation: spin-slow 8s linear infinite; }
+    .spin-slow:hover { animation-play-state: paused; }
+
+    /* Shimmer skeleton */
+    @keyframes shimmer {
+      0% { background-position: -200% 0; }
+      100% { background-position: 200% 0; }
+    }
+    .skeleton {
+      background: linear-gradient(90deg, #1a1a1a 25%, #2a2a2a 50%, #1a1a1a 75%);
+      background-size: 200% 100%;
+      animation: shimmer 1.5s infinite;
+    }
+
+    /* Smooth scroll */
+    html { scroll-behavior: smooth; }
+
+    /* Custom scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0a0a0a; }
+    ::-webkit-scrollbar-thumb { background: #f59e0b; border-radius: 3px; }
+
+    /* Gold glow effect */
+    .gold-glow { box-shadow: 0 0 20px rgba(245, 158, 11, 0.3); }
+    .gold-glow-sm { box-shadow: 0 0 10px rgba(245, 158, 11, 0.2); }
+
+    /* Store badge colors */
+    .badge-amber  { background: rgba(245,158,11,0.15); color: #f59e0b; border: 1px solid rgba(245,158,11,0.3); }
+    .badge-red    { background: rgba(239,68,68,0.15);  color: #ef4444; border: 1px solid rgba(239,68,68,0.3); }
+    .badge-emerald{ background: rgba(16,185,129,0.15); color: #10b981; border: 1px solid rgba(16,185,129,0.3); }
+    .badge-orange { background: rgba(249,115,22,0.15); color: #f97316; border: 1px solid rgba(249,115,22,0.3); }
+    .badge-violet { background: rgba(139,92,246,0.15); color: #8b5cf6; border: 1px solid rgba(139,92,246,0.3); }
+
+    .border-amber  { border-color: #f59e0b !important; }
+    .border-red    { border-color: #ef4444 !important; }
+    .border-emerald{ border-color: #10b981 !important; }
+    .border-orange { border-color: #f97316 !important; }
+    .border-violet { border-color: #8b5cf6 !important; }
+
+    .header-amber  { background: rgba(245,158,11,0.08); border-bottom: 2px solid #f59e0b; }
+    .header-red    { background: rgba(239,68,68,0.08);  border-bottom: 2px solid #ef4444; }
+    .header-emerald{ background: rgba(16,185,129,0.08); border-bottom: 2px solid #10b981; }
+    .header-orange { background: rgba(249,115,22,0.08); border-bottom: 2px solid #f97316; }
+    .header-violet { background: rgba(139,92,246,0.08); border-bottom: 2px solid #8b5cf6; }
+
+    /* Card hover */
+    .vinyl-card {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .vinyl-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 8px 30px rgba(245,158,11,0.15);
+    }
+
+    /* Tab active */
+    .tab-btn.active {
+      background: #f59e0b;
+      color: #0a0a0a;
+    }
+
+    /* Prevent double-tap zoom on all interactive elements */
+    button, a, input, [role="button"] {
+      touch-action: manipulation;
+    }
+
+    /* Minimum touch target size (44px) */
+    .tab-btn { min-height: 44px; }
+    header button, header input { min-height: 44px; }
+
+    /* Price highlight */
+    .price-lowest {
+      background: linear-gradient(135deg, #f59e0b, #d97706);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+    }
+  </style>
+</head>
+<body class="min-h-screen text-gray-100">
+
+<!-- ============================================================
+     HEADER
+============================================================ -->
+<header class="sticky top-0 z-50 bg-black/80 backdrop-blur-md border-b border-[#2a2a2a]">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center gap-4">
+    <!-- Logo -->
+    <div class="flex items-center gap-2 flex-shrink-0">
+      <svg class="w-8 h-8 text-amber-400 spin-slow" viewBox="0 0 100 100" fill="currentColor">
+        <circle cx="50" cy="50" r="48" fill="#1a1a1a" stroke="#f59e0b" stroke-width="2"/>
+        <circle cx="50" cy="50" r="32" fill="#0a0a0a"/>
+        <circle cx="50" cy="50" r="18" fill="#1a1a1a"/>
+        <circle cx="50" cy="50" r="5" fill="#f59e0b"/>
+        <path d="M50 18 Q60 34 50 50" stroke="#333" stroke-width="1.5" fill="none"/>
+        <path d="M50 50 Q66 42 82 50" stroke="#333" stroke-width="1.5" fill="none"/>
+        <path d="M50 50 Q42 66 50 82" stroke="#333" stroke-width="1.5" fill="none"/>
+        <path d="M50 50 Q34 58 18 50" stroke="#333" stroke-width="1.5" fill="none"/>
+        <path d="M50 50 Q58 34 50 18" stroke="#2a2a2a" stroke-width="1.5" fill="none"/>
+      </svg>
+      <span class="text-lg font-bold text-amber-400 tracking-wide hidden sm:block">Vinyl 比價</span>
+    </div>
+
+    <!-- Search bar (header, compact) -->
+    <form id="headerSearchForm" class="flex-1 flex gap-2" onsubmit="handleSearch(event, 'header')">
+      <div class="flex-1 relative">
+        <input id="headerSearchInput"
+               type="text"
+               placeholder="搜尋黑膠..."
+               autocomplete="off"
+               class="w-full bg-[#1a1a1a] border border-[#2a2a2a] rounded-full px-4 py-3 text-base text-gray-100 placeholder-gray-500 focus:outline-none focus:border-amber-400 focus:ring-1 focus:ring-amber-400/50 transition-all"/>
+      </div>
+      <button type="submit"
+              class="flex-shrink-0 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black font-semibold px-5 py-3 rounded-full text-sm transition-colors">
+        搜尋
+      </button>
+    </form>
+
+    <!-- Scroll to top -->
+    <a href="#top" class="hidden sm:flex items-center text-gray-500 hover:text-amber-400 transition-colors text-xs">
+      ▲ 頂部
+    </a>
+  </div>
+</header>
+
+<!-- ============================================================
+     HERO SECTION
+============================================================ -->
+<section id="top" class="relative overflow-hidden py-10 sm:py-16 px-4 text-center">
+  <!-- Background vinyl rings -->
+  <div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-5">
+    <div class="w-[600px] h-[600px] rounded-full border-2 border-amber-400"></div>
+    <div class="absolute w-[400px] h-[400px] rounded-full border-2 border-amber-400"></div>
+    <div class="absolute w-[200px] h-[200px] rounded-full border-2 border-amber-400"></div>
+  </div>
+
+  <div class="relative max-w-2xl mx-auto">
+    <div class="inline-flex items-center gap-2 bg-amber-500/10 border border-amber-500/30 rounded-full px-4 py-1 text-amber-400 text-xs mb-6">
+      <span>🎵</span> 全台黑膠唱片比價平台
+    </div>
+    <h1 class="text-3xl sm:text-5xl font-black text-white mb-3 tracking-tight">
+      找到最好的<span class="text-amber-400">黑膠價格</span>
+    </h1>
+    <p class="text-gray-400 text-base mb-8">
+      同時搜尋山海山、燭光唱片、誠品線上及蝦皮賣家，一鍵比價
+    </p>
+
+    <!-- Main search form -->
+    <form id="heroSearchForm" class="flex gap-2 max-w-lg mx-auto" onsubmit="handleSearch(event, 'hero')">
+      <div class="flex-1 relative">
+        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">🔍</span>
+        <input id="heroSearchInput"
+               type="text"
+               autocomplete="off"
+               inputmode="search"
+               placeholder="輸入唱片名稱或歌手..."
+               class="w-full bg-[#1a1a1a] border-2 border-[#2a2a2a] rounded-2xl pl-12 pr-4 py-4 text-gray-100 placeholder-gray-500 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30 transition-all text-base gold-glow-sm" />
+      </div>
+      <button type="submit"
+              class="flex-shrink-0 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black font-bold px-5 sm:px-6 py-4 rounded-2xl text-base transition-colors gold-glow whitespace-nowrap">
+        比價
+      </button>
+    </form>
+
+    <!-- Quick search tags -->
+    <div class="flex flex-wrap justify-center gap-2 mt-4">
+      <span class="text-gray-500 text-xs self-center">熱門：</span>
+      {% set tags = ['Miles Davis', 'Pink Floyd', '羅大佑', 'Beatles', 'Daft Punk', 'Coltrane'] %}
+      {% for tag in tags %}
+      <button onclick="quickSearch('{{ tag }}')"
+              class="text-sm bg-[#1a1a1a] hover:bg-[#2a2a2a] active:bg-[#333] border border-[#2a2a2a] hover:border-amber-400/50 text-gray-400 hover:text-amber-400 px-3 py-2 rounded-full transition-all min-h-[36px]">
+        {{ tag }}
+      </button>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+     SEARCH RESULTS (hidden until search)
+============================================================ -->
+<section id="searchResults" class="hidden max-w-7xl mx-auto px-4 pb-12">
+  <!-- Search header -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h2 class="text-xl font-bold text-white">
+        搜尋結果：<span id="searchQueryLabel" class="text-amber-400"></span>
+      </h2>
+      <p id="searchSummary" class="text-gray-500 text-sm mt-1"></p>
+    </div>
+    <button onclick="clearSearch()"
+            class="text-gray-500 hover:text-amber-400 text-sm flex items-center gap-1 transition-colors">
+      ✕ 清除
+    </button>
+  </div>
+
+  <!-- Loading state -->
+  <div id="searchLoading" class="hidden">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      {% for _ in range(6) %}
+      <div class="bg-[#141414] rounded-2xl p-4 border border-[#2a2a2a]">
+        <div class="skeleton h-48 rounded-xl mb-3"></div>
+        <div class="skeleton h-4 rounded w-3/4 mb-2"></div>
+        <div class="skeleton h-4 rounded w-1/2 mb-3"></div>
+        <div class="skeleton h-8 rounded-lg"></div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Results container -->
+  <div id="searchResultsContainer"></div>
+</section>
+
+<!-- ============================================================
+     RECOMMENDATIONS
+============================================================ -->
+<section id="recommendations" class="max-w-7xl mx-auto px-4 pb-16">
+  <!-- Section title -->
+  <div class="flex items-center gap-3 mb-6">
+    <div class="w-1 h-8 bg-amber-400 rounded-full"></div>
+    <h2 class="text-2xl font-bold text-white">精選推薦</h2>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex gap-2 mb-6 flex-wrap">
+    <button class="tab-btn active text-sm font-semibold px-4 py-2 rounded-full border border-[#2a2a2a] transition-all" onclick="switchTab('weekly_hot', this)">🔥 本週熱門</button>
+    <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-[#2a2a2a] bg-[#141414] text-gray-400 hover:text-amber-400 transition-all" onclick="switchTab('classics', this)">💿 經典必收</button>
+    <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-[#2a2a2a] bg-[#141414] text-gray-400 hover:text-amber-400 transition-all" onclick="switchTab('new_arrivals', this)">✨ 新品上架</button>
+    <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-[#2a2a2a] bg-[#141414] text-gray-400 hover:text-amber-400 transition-all" onclick="switchTab('mandarin', this)">🎵 華語精選</button>
+  </div>
+
+  <!-- Tab content -->
+  {% set tabs = [
+    ('weekly_hot', recommendations.weekly_hot),
+    ('classics',   recommendations.classics),
+    ('new_arrivals', recommendations.new_arrivals),
+    ('mandarin',   recommendations.mandarin)
+  ] %}
+
+  {% for tab_id, items in tabs %}
+  <div id="tab-{{ tab_id }}" class="tab-content {% if not loop.first %}hidden{% endif %}">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      {% for album in items %}
+      <div class="vinyl-card bg-[#141414] rounded-2xl overflow-hidden border border-[#2a2a2a] hover:border-amber-400/30 cursor-pointer"
+           onclick="quickSearch('{{ album.title }} {{ album.artist }}')">
+        <!-- Cover image -->
+        <div class="relative aspect-square overflow-hidden bg-[#0a0a0a]">
+          <img src="{{ album.image }}"
+               alt="{{ album.title }}"
+               class="w-full h-full object-cover"
+               onerror="this.src='https://placehold.co/300x300/141414/f59e0b?text=♪'" />
+          <!-- Genre badge -->
+          <span class="absolute top-2 right-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-black/70 text-amber-400 border border-amber-400/30">
+            {{ album.genre }}
+          </span>
+          <!-- Search overlay -->
+          <div class="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+            <span class="text-white font-bold text-sm bg-amber-500 px-4 py-2 rounded-full">🔍 比價</span>
+          </div>
+        </div>
+        <!-- Info -->
+        <div class="p-3 sm:p-3">
+          <h3 class="font-bold text-white text-base sm:text-sm leading-tight line-clamp-2 mb-1">{{ album.title }}</h3>
+          <p class="text-gray-400 text-sm sm:text-xs mb-1">{{ album.artist }}</p>
+          <p class="text-gray-600 text-sm sm:text-xs mb-2">{{ album.year }}</p>
+          {% if album.avg_price %}
+          <p class="text-amber-400 text-sm sm:text-xs font-semibold">均價約 NT$ {{ album.avg_price }}</p>
+          {% endif %}
+          <p class="text-gray-500 text-sm sm:text-xs mt-1 line-clamp-2 leading-relaxed">{{ album.description }}</p>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+  {% endfor %}
+</section>
+
+<!-- ============================================================
+     FOOTER
+============================================================ -->
+<footer class="border-t border-[#1a1a1a] py-8 px-4 text-center text-gray-600 text-sm">
+  <div class="flex items-center justify-center gap-2 mb-2">
+    <svg class="w-5 h-5 text-amber-400/50" viewBox="0 0 100 100" fill="currentColor">
+      <circle cx="50" cy="50" r="48" fill="#1a1a1a" stroke="#f59e0b" stroke-width="2" opacity="0.5"/>
+      <circle cx="50" cy="50" r="5" fill="#f59e0b" opacity="0.5"/>
+    </svg>
+    <span>Vinyl 比價系統</span>
+  </div>
+  <p class="text-xs text-gray-700">搜尋結果來自各唱片行網站，價格僅供參考，以各店實際標價為準</p>
+  <p class="text-xs text-gray-800 mt-1">山海山 · 燭光唱片 · 誠品線上 · 蝦皮</p>
+</footer>
+
+<!-- ============================================================
+     JAVASCRIPT
+============================================================ -->
+<script>
+// ---- Tab switching ----
+function switchTab(tabId, btn) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active', 'text-black');
+    b.classList.add('bg-[#141414]', 'text-gray-400');
+  });
+  document.getElementById('tab-' + tabId).classList.remove('hidden');
+  btn.classList.add('active');
+  btn.classList.remove('bg-[#141414]', 'text-gray-400');
+}
+
+// ---- Search ----
+function quickSearch(term) {
+  document.getElementById('heroSearchInput').value = term;
+  document.getElementById('headerSearchInput').value = term;
+  doSearch(term);
+}
+
+function handleSearch(e, source) {
+  e.preventDefault();
+  const input = source === 'hero' ? 'heroSearchInput' : 'headerSearchInput';
+  const query = document.getElementById(input).value.trim();
+  if (!query) return;
+  document.getElementById('heroSearchInput').value = query;
+  document.getElementById('headerSearchInput').value = query;
+  doSearch(query);
+}
+
+function clearSearch() {
+  document.getElementById('searchResults').classList.add('hidden');
+  document.getElementById('recommendations').classList.remove('hidden');
+  document.getElementById('heroSearchInput').value = '';
+  document.getElementById('headerSearchInput').value = '';
+  document.getElementById('searchResultsContainer').innerHTML = '';
+}
+
+async function doSearch(query) {
+  // Show results section, hide recommendations
+  document.getElementById('recommendations').classList.add('hidden');
+  const resultSection = document.getElementById('searchResults');
+  resultSection.classList.remove('hidden');
+  resultSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  document.getElementById('searchQueryLabel').textContent = query;
+  document.getElementById('searchSummary').textContent = '搜尋中...';
+  document.getElementById('searchLoading').classList.remove('hidden');
+  document.getElementById('searchResultsContainer').innerHTML = '';
+
+  try {
+    const resp = await fetch(`/api/search?q=${encodeURIComponent(query)}`);
+    const data = await resp.json();
+    document.getElementById('searchLoading').classList.add('hidden');
+
+    if (data.error) {
+      document.getElementById('searchResultsContainer').innerHTML =
+        `<div class="text-center py-12 text-red-400">${data.error}</div>`;
+      return;
+    }
+
+    renderResults(data);
+  } catch (err) {
+    document.getElementById('searchLoading').classList.add('hidden');
+    document.getElementById('searchResultsContainer').innerHTML =
+      `<div class="text-center py-12 text-red-400">搜尋失敗：${err.message}</div>`;
+  }
+}
+
+function renderResults(data) {
+  const { results, min_price, source_order, query } = data;
+  const container = document.getElementById('searchResultsContainer');
+
+  let totalItems = 0;
+  let totalSources = 0;
+  source_order.forEach(key => {
+    const src = results[key];
+    if (src && src.items.length > 0) {
+      totalItems += src.items.length;
+      totalSources++;
+    }
+  });
+
+  document.getElementById('searchSummary').textContent =
+    totalItems > 0
+      ? `共找到 ${totalItems} 筆結果，來自 ${totalSources} 個來源${min_price ? `，最低價 NT$ ${min_price.toLocaleString()}` : ''}`
+      : '所有來源均無結果，請嘗試其他關鍵字';
+
+  if (totalItems === 0) {
+    container.innerHTML = `
+      <div class="text-center py-20">
+        <div class="text-6xl mb-4">💿</div>
+        <h3 class="text-xl font-bold text-gray-400 mb-2">找不到「${query}」的黑膠</h3>
+        <p class="text-gray-600 text-sm">嘗試不同的關鍵字，或查看下方推薦</p>
+        <button onclick="clearSearch()" class="mt-4 text-amber-400 hover:text-amber-300 text-sm underline">瀏覽推薦清單</button>
+      </div>`;
+    return;
+  }
+
+  let html = '';
+
+  source_order.forEach(key => {
+    const src = results[key];
+    if (!src) return;
+
+    const color = src.color;
+    const hasItems = src.items.length > 0;
+
+    html += `
+      <div class="mb-8">
+        <div class="header-${color} rounded-t-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-2">
+          <div class="flex items-center gap-2 flex-wrap">
+            <span class="badge-${color} px-3 py-1.5 rounded-full text-sm font-semibold">${src.name}</span>
+            <span class="text-gray-500 text-sm">${src.items.length} 筆結果</span>
+          </div>
+          ${src.error ? `<span class="text-red-400 text-xs">⚠ ${src.error.substring(0,50)}</span>` : ''}
+        </div>
+        <div class="border-l border-r border-b border-${color} rounded-b-2xl overflow-hidden">`;
+
+    if (!hasItems) {
+      html += `<div class="py-6 text-center text-gray-600 bg-[#141414]">此來源無結果</div>`;
+    } else {
+      html += `<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-0 divide-y sm:divide-x sm:divide-y divide-[#1e1e1e] bg-[#141414]">`;
+
+      src.items.forEach(item => {
+        const isLowest = min_price && item.price === min_price && item.in_stock;
+        const priceDisplay = item.price
+          ? `NT$ ${item.price.toLocaleString()}`
+          : '洽詢';
+
+        html += `
+          <a href="${item.link || '#'}" target="_blank" rel="noopener noreferrer"
+             class="vinyl-card p-3 flex flex-col gap-2 hover:bg-[#1e1e1e] transition-colors group">
+            <!-- Image -->
+            <div class="aspect-square rounded-xl overflow-hidden bg-[#0a0a0a] relative">
+              ${item.image
+                ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/300x300/141414/f59e0b?text=♪'" />`
+                : `<div class="w-full h-full flex items-center justify-center text-4xl text-gray-700">♪</div>`
+              }
+              ${isLowest ? `<div class="absolute top-1 left-1 bg-amber-500 text-black text-xs font-bold px-2 py-0.5 rounded-full">最低價</div>` : ''}
+              <div class="${item.in_stock ? 'bg-emerald-500/20 text-emerald-400' : 'bg-red-500/20 text-red-400'} absolute bottom-1 right-1 text-xs px-2 py-0.5 rounded-full border ${item.in_stock ? 'border-emerald-500/30' : 'border-red-500/30'}">
+                ${item.in_stock ? '有貨' : '缺貨'}
+              </div>
+            </div>
+            <!-- Info -->
+            <div class="flex-1 min-w-0">
+              <h4 class="text-white text-sm font-semibold line-clamp-3 leading-snug group-hover:text-amber-400 transition-colors">
+                ${escapeHtml(item.name)}
+              </h4>
+            </div>
+            <!-- Price -->
+            <div class="${isLowest ? 'price-lowest text-lg' : 'text-amber-400 text-base'} font-bold mt-auto">
+              ${priceDisplay}
+            </div>
+            <div class="text-sm text-gray-600 group-hover:text-gray-400 transition-colors">點擊前往 →</div>
+          </a>`;
+      });
+
+      html += `</div>`;
+    }
+
+    html += `</div></div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+function escapeHtml(str) {
+  if (!str) return '';
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+</script>
+
+</body>
+</html>

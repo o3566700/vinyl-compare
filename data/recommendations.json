@@ -1,0 +1,190 @@
+{
+  "weekly_hot": [
+    {
+      "title": "Abbey Road",
+      "artist": "The Beatles",
+      "genre": "搖滾",
+      "year": 1969,
+      "image": "https://placehold.co/300x300/1a1a2e/f59e0b?text=Abbey+Road",
+      "description": "披頭四最後一張錄音室專輯，Side B 組曲堪稱完美。",
+      "avg_price": 1200
+    },
+    {
+      "title": "Kind of Blue",
+      "artist": "Miles Davis",
+      "genre": "爵士",
+      "year": 1959,
+      "image": "https://placehold.co/300x300/1a1a2e/f59e0b?text=Kind+of+Blue",
+      "description": "史上最暢銷的爵士黑膠，模態爵士樂奠基之作。",
+      "avg_price": 980
+    },
+    {
+      "title": "Rumours",
+      "artist": "Fleetwood Mac",
+      "genre": "搖滾",
+      "year": 1977,
+      "image": "https://placehold.co/300x300/1a1a2e/f59e0b?text=Rumours",
+      "description": "1970年代最暢銷專輯之一，每首歌都是精品。",
+      "avg_price": 1100
+    },
+    {
+      "title": "Random Access Memories",
+      "artist": "Daft Punk",
+      "genre": "電子",
+      "year": 2013,
+      "image": "https://placehold.co/300x300/1a1a2e/f59e0b?text=RAM",
+      "description": "Get Lucky 讓全球再次愛上實體唱片。",
+      "avg_price": 1500
+    }
+  ],
+  "classics": [
+    {
+      "title": "Dark Side of the Moon",
+      "artist": "Pink Floyd",
+      "genre": "搖滾",
+      "year": 1973,
+      "image": "https://placehold.co/300x300/0d0d1a/a78bfa?text=DSOTM",
+      "description": "連續 741 週登上告示牌榜單，史詩級概念專輯。",
+      "avg_price": 1800
+    },
+    {
+      "title": "Blue Train",
+      "artist": "John Coltrane",
+      "genre": "爵士",
+      "year": 1958,
+      "image": "https://placehold.co/300x300/0d0d1a/a78bfa?text=Blue+Train",
+      "description": "Coltrane 在 Blue Note 唯一的領銜錄音，珍稀之作。",
+      "avg_price": 2200
+    },
+    {
+      "title": "Thriller",
+      "artist": "Michael Jackson",
+      "genre": "流行",
+      "year": 1982,
+      "image": "https://placehold.co/300x300/0d0d1a/a78bfa?text=Thriller",
+      "description": "史上最暢銷專輯，每一首都是傳奇。",
+      "avg_price": 900
+    },
+    {
+      "title": "Nevermind",
+      "artist": "Nirvana",
+      "genre": "搖滾",
+      "year": 1991,
+      "image": "https://placehold.co/300x300/0d0d1a/a78bfa?text=Nevermind",
+      "description": "Smells Like Teen Spirit 改變了整個音樂產業。",
+      "avg_price": 1300
+    },
+    {
+      "title": "Beethoven: Symphony No. 9",
+      "artist": "Berliner Philharmoniker / Karajan",
+      "genre": "古典",
+      "year": 1963,
+      "image": "https://placehold.co/300x300/0d0d1a/a78bfa?text=Beethoven+9",
+      "description": "卡拉揚指揮柏林愛樂，古典樂黑膠收藏必備。",
+      "avg_price": 2500
+    },
+    {
+      "title": "Selected Ambient Works 85-92",
+      "artist": "Aphex Twin",
+      "genre": "電子",
+      "year": 1992,
+      "image": "https://placehold.co/300x300/0d0d1a/a78bfa?text=SAW+85-92",
+      "description": "環境電子音樂聖典，影響無數後進。",
+      "avg_price": 1600
+    }
+  ],
+  "new_arrivals": [
+    {
+      "title": "Radical Optimism",
+      "artist": "Dua Lipa",
+      "genre": "流行",
+      "year": 2024,
+      "image": "https://placehold.co/300x300/0a1628/34d399?text=Radical+Opt",
+      "description": "Dua Lipa 2024 年最新專輯，迪斯可舞池風格。",
+      "avg_price": 1200
+    },
+    {
+      "title": "GNX",
+      "artist": "Kendrick Lamar",
+      "genre": "嘻哈",
+      "year": 2024,
+      "image": "https://placehold.co/300x300/0a1628/34d399?text=GNX",
+      "description": "年度最受矚目的嘻哈專輯，突如其來的驚喜之作。",
+      "avg_price": 1400
+    },
+    {
+      "title": "Hit Me Hard and Soft",
+      "artist": "Billie Eilish",
+      "genre": "流行",
+      "year": 2024,
+      "image": "https://placehold.co/300x300/0a1628/34d399?text=Hit+Me+Hard",
+      "description": "Billie Eilish 2024 力作，情感濃厚。",
+      "avg_price": 1100
+    },
+    {
+      "title": "Short n' Sweet",
+      "artist": "Sabrina Carpenter",
+      "genre": "流行",
+      "year": 2024,
+      "image": "https://placehold.co/300x300/0a1628/34d399?text=Short+Sweet",
+      "description": "2024 年夏季最熱門流行專輯。",
+      "avg_price": 1000
+    }
+  ],
+  "mandarin": [
+    {
+      "title": "童年",
+      "artist": "羅大佑",
+      "genre": "華語",
+      "year": 1982,
+      "image": "https://placehold.co/300x300/1a0a0a/fbbf24?text=童年",
+      "description": "羅大佑首張專輯，台灣流行樂壇的里程碑。",
+      "avg_price": 2800
+    },
+    {
+      "title": "之乎者也",
+      "artist": "羅大佑",
+      "genre": "華語",
+      "year": 1982,
+      "image": "https://placehold.co/300x300/1a0a0a/fbbf24?text=之乎者也",
+      "description": "台灣流行音樂史最重要的專輯之一。",
+      "avg_price": 3200
+    },
+    {
+      "title": "夜生活",
+      "artist": "張惠妹",
+      "genre": "華語",
+      "year": 2009,
+      "image": "https://placehold.co/300x300/1a0a0a/fbbf24?text=夜生活",
+      "description": "AMei 首張電音舞曲專輯，里程碑之作。",
+      "avg_price": 1500
+    },
+    {
+      "title": "花樣年華",
+      "artist": "周杰倫",
+      "genre": "華語",
+      "year": 2000,
+      "image": "https://placehold.co/300x300/1a0a0a/fbbf24?text=花樣年華",
+      "description": "周董出道作，R&B 融合中國風，開創時代。",
+      "avg_price": 1800
+    },
+    {
+      "title": "Beyond IV",
+      "artist": "Beyond",
+      "genre": "華語",
+      "year": 1989,
+      "image": "https://placehold.co/300x300/1a0a0a/fbbf24?text=Beyond+IV",
+      "description": "光輝歲月、真的愛你、大地，經典中的經典。",
+      "avg_price": 3500
+    },
+    {
+      "title": "我很忙",
+      "artist": "周杰倫",
+      "genre": "華語",
+      "year": 2007,
+      "image": "https://placehold.co/300x300/1a0a0a/fbbf24?text=我很忙",
+      "description": "牛仔很忙、彩虹，多元風格展現。",
+      "avg_price": 1600
+    }
+  ]
+}
