@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import concurrent.futures
 from flask import Flask, render_template, jsonify, request
 
@@ -44,6 +45,22 @@ SOURCES = [
 ]
 
 
+def filter_relevant_items(items, query):
+    """Keep only items whose name contains at least one word from the search query."""
+    if not items or not query:
+        return items
+    # Split on whitespace; keep words of 2+ chars
+    words = [w.lower() for w in re.split(r'\s+', query.strip()) if len(w) >= 2]
+    if not words:
+        return items
+    filtered = []
+    for item in items:
+        name_lower = (item.get('name') or '').lower()
+        if any(word in name_lower for word in words):
+            filtered.append(item)
+    return filtered
+
+
 def load_recommendations():
     with open(RECO_FILE, 'r', encoding='utf-8') as f:
         return json.load(f)
@@ -85,6 +102,10 @@ def api_search():
         for future in concurrent.futures.as_completed(futures):
             key, data = future.result()
             results[key] = data
+
+    # Filter results by relevance: item name must contain at least one query word
+    for key in results:
+        results[key]['items'] = filter_relevant_items(results[key]['items'], query)
 
     # Find global minimum price across all results
     all_prices = [
