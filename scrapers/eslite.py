@@ -12,6 +12,10 @@ HEADERS = {
 API_URL = 'https://athena.eslite.com/api/v2/search'
 IMG_BASE = 'https://www.eslite.com'
 
+# Keywords that indicate a product is NOT vinyl (books, DVDs, CDs, magazines)
+NON_VINYL_KEYWORDS = ['書', '雜誌', 'dvd', 'blu-ray', ' cd ', '(cd)', 'bd ', '電影', '影碟']
+VINYL_KEYWORDS = ['黑膠', 'lp', 'vinyl', '唱片', '12"', '7"', '12吋', '7吋']
+
 
 def extract_price(text):
     if not text:
@@ -20,11 +24,44 @@ def extract_price(text):
     return int(digits) if digits else None
 
 
+def is_likely_vinyl(name):
+    """Return True if the product is likely vinyl, False if clearly non-vinyl."""
+    name_lower = name.lower()
+    # If name contains non-vinyl keywords (and not a vinyl keyword to override), skip
+    has_vinyl = any(kw in name_lower for kw in VINYL_KEYWORDS)
+    has_non_vinyl = any(kw in name_lower for kw in NON_VINYL_KEYWORDS)
+    if has_non_vinyl and not has_vinyl:
+        return False
+    return True
+
+
+def fetch_itunes_cover(name):
+    """Fallback: fetch album artwork from iTunes Search API."""
+    try:
+        # Strip vinyl-specific suffixes to improve iTunes match accuracy
+        term = re.sub(r'黑膠|vinyl|唱片|\d{3}g', '', name, flags=re.IGNORECASE).strip()
+        resp = requests.get(
+            'https://itunes.apple.com/search',
+            params={'term': term, 'media': 'music', 'entity': 'album', 'limit': 1, 'country': 'TW'},
+            timeout=5,
+        )
+        data = resp.json()
+        if data.get('results'):
+            artwork = data['results'][0].get('artworkUrl100', '')
+            if artwork:
+                return artwork.replace('100x100bb', '300x300bb')
+    except Exception:
+        pass
+    return ''
+
+
 def search(query):
     results = []
     try:
+        # Always append 黑膠 to restrict to vinyl category
+        vinyl_query = f'{query} 黑膠' if '黑膠' not in query and 'vinyl' not in query.lower() else query
         params = {
-            'keyword': query,
+            'keyword': vinyl_query,
             'page': 1,
             'pageSize': 10,
         }
@@ -35,7 +72,7 @@ def search(query):
         for hit in data.get('hits', {}).get('hit', [])[:10]:
             fields = hit.get('fields', {})
             name = fields.get('name', '').strip()
-            if not name:
+            if not name or not is_likely_vinyl(name):
                 continue
 
             price = extract_price(fields.get('final_price', ''))
@@ -47,6 +84,9 @@ def search(query):
             img = ''
             if img_path:
                 img = img_path if img_path.startswith('http') else IMG_BASE + img_path
+
+            if not img:
+                img = fetch_itunes_cover(name)
 
             results.append({
                 'name': name,
