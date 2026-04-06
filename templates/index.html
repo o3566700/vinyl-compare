@@ -307,6 +307,36 @@
 </section>
 
 <!-- ============================================================
+     ESLITE HOT RANKING
+============================================================ -->
+<section id="esliteRanking" class="max-w-7xl mx-auto px-4 pb-16">
+  <!-- Section title -->
+  <div class="flex items-center gap-3 mb-6">
+    <div class="w-1 h-8 bg-emerald-400 rounded-full"></div>
+    <h2 class="text-2xl font-bold text-white">誠品黑膠 熱門排行</h2>
+    <span class="text-xs text-gray-500 bg-[#141414] border border-[#2a2a2a] px-2 py-1 rounded-full">週排行</span>
+    <span id="rankingStatus" class="text-xs text-gray-600">載入中...</span>
+  </div>
+
+  <!-- Skeleton loading state -->
+  <div id="rankingSkeleton" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
+    {% for _ in range(10) %}
+    <div class="bg-[#141414] rounded-2xl overflow-hidden border border-[#2a2a2a] p-3 flex gap-3">
+      <div class="skeleton w-16 h-16 rounded-lg flex-shrink-0"></div>
+      <div class="flex-1 min-w-0">
+        <div class="skeleton h-3 rounded w-4/5 mb-2"></div>
+        <div class="skeleton h-3 rounded w-1/2 mb-2"></div>
+        <div class="skeleton h-3 rounded w-1/3"></div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <!-- Ranking grid (filled by JS) -->
+  <div id="rankingGrid" class="hidden grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3"></div>
+</section>
+
+<!-- ============================================================
      FOOTER
 ============================================================ -->
 <footer class="border-t border-[#1a1a1a] py-8 px-4 text-center text-gray-600 text-sm">
@@ -478,6 +508,70 @@ function escapeHtml(str) {
   if (!str) return '';
   return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
 }
+
+// ---- Eslite Hot Ranking ----
+async function loadEsliteRanking() {
+  try {
+    const resp = await fetch('/api/eslite-ranking');
+    const data = await resp.json();
+    document.getElementById('rankingSkeleton').classList.add('hidden');
+    const grid = document.getElementById('rankingGrid');
+    grid.classList.remove('hidden');
+
+    if (data.error || !data.items || data.items.length === 0) {
+      document.getElementById('rankingStatus').textContent = data.error ? '載入失敗' : '暫無資料';
+      grid.innerHTML = '<p class="col-span-full text-center text-gray-600 py-8">暫無排行資料</p>';
+      return;
+    }
+
+    document.getElementById('rankingStatus').textContent = `共 ${data.items.length} 筆`;
+
+    const rankColors = ['text-amber-400', 'text-gray-300', 'text-amber-600'];
+    let html = '';
+    data.items.forEach(item => {
+      const rankColor = item.rank <= 3 ? rankColors[item.rank - 1] : 'text-gray-600';
+      const priceDisplay = item.price ? `NT$ ${item.price.toLocaleString()}` : '洽詢';
+      const stockBadge = item.in_stock
+        ? '<span class="text-xs text-emerald-400">有貨</span>'
+        : '<span class="text-xs text-red-400">缺貨</span>';
+
+      html += `
+        <a href="${escapeHtml(item.url)}" target="_blank" rel="noopener noreferrer"
+           class="vinyl-card bg-[#141414] rounded-2xl overflow-hidden border border-[#2a2a2a] hover:border-emerald-400/30 p-3 flex gap-3 group">
+          <!-- Rank number -->
+          <div class="flex flex-col items-center justify-start pt-1 w-6 flex-shrink-0">
+            <span class="font-black text-lg leading-none ${rankColor}">${item.rank}</span>
+          </div>
+          <!-- Cover image -->
+          <div class="w-16 h-16 rounded-lg overflow-hidden bg-[#0a0a0a] flex-shrink-0 relative">
+            ${item.image
+              ? `<img src="${escapeHtml(item.image)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover" onerror="this.src='https://placehold.co/64x64/141414/10b981?text=♪'" />`
+              : `<div class="w-full h-full flex items-center justify-center text-2xl text-gray-700">♪</div>`
+            }
+          </div>
+          <!-- Info -->
+          <div class="flex-1 min-w-0">
+            <h4 class="text-white text-sm font-semibold line-clamp-2 leading-snug group-hover:text-emerald-400 transition-colors mb-0.5">${escapeHtml(item.name)}</h4>
+            <p class="text-gray-500 text-xs line-clamp-1 mb-1">${escapeHtml(item.author)}</p>
+            <div class="flex items-center gap-2">
+              <span class="text-emerald-400 text-sm font-bold">${priceDisplay}</span>
+              ${stockBadge}
+            </div>
+          </div>
+        </a>`;
+    });
+    grid.innerHTML = html;
+  } catch (err) {
+    document.getElementById('rankingSkeleton').classList.add('hidden');
+    document.getElementById('rankingStatus').textContent = '載入失敗';
+    document.getElementById('rankingGrid').classList.remove('hidden');
+    document.getElementById('rankingGrid').innerHTML =
+      '<p class="col-span-full text-center text-gray-600 py-8">排行榜載入失敗</p>';
+  }
+}
+
+// Load ranking on page load
+loadEsliteRanking();
 </script>
 
 </body>

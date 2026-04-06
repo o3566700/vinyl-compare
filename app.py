@@ -6,6 +6,7 @@ from flask import Flask, render_template, jsonify, request
 
 from scrapers import shanhaisan, candlelight, eslite
 from scrapers.covers import get_cover
+from scrapers import eslite_ranking as eslite_rank
 
 app = Flask(__name__)
 
@@ -151,6 +152,15 @@ def api_search():
 @app.route('/api/recommendations')
 def api_recommendations():
     return jsonify(_fetch_live_recommendations())
+
+
+@app.route('/api/eslite-ranking')
+def api_eslite_ranking():
+    try:
+        items = eslite_rank.fetch_hot_ranking(limit=10)
+        return jsonify({'items': items, 'error': None})
+    except Exception as e:
+        return jsonify({'items': [], 'error': str(e)})
 
 
 if __name__ == '__main__':
