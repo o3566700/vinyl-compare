@@ -8,7 +8,7 @@ HEADERS = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
 }
 
-BASE_URL = 'https://www.shanhaisan.com'
+BASE_URL = 'https://www.shsmusic.tw'
 
 
 def extract_price(text):
@@ -18,53 +18,86 @@ def extract_price(text):
     return int(digits) if digits else None
 
 
+def _parse_items(soup, limit=10):
+    results = []
+    seen_nums = set()
+
+    for item in soup.select('div.item[data-num]'):
+        num = item.get('data-num', '')
+        if num in seen_nums:
+            continue
+        seen_nums.add(num)
+
+        title_tw = item.select_one('.title .txt-tw')
+        title_en = item.select_one('.title .txt-en')
+        author_tw = item.select_one('.author .txt-tw')
+        author_en = item.select_one('.author .txt-en')
+        price_el = item.select_one('.price b')
+        link_el = item.select_one('a.pic')
+        img_el = item.select_one('a.pic img')
+
+        name_tw = title_tw.get_text(strip=True) if title_tw else ''
+        name_en = title_en.get_text(strip=True) if title_en else ''
+        artist_tw = author_tw.get_text(strip=True) if author_tw else ''
+        artist_en = author_en.get_text(strip=True) if author_en else ''
+
+        # Build display name: prefer English title if available
+        if name_en and artist_en:
+            name = f'{artist_en} - {name_en}'
+        elif name_en:
+            name = name_en
+        elif name_tw and artist_tw:
+            name = f'{artist_tw} - {name_tw}'
+        else:
+            name = name_tw or name_en
+        if not name:
+            continue
+
+        price = extract_price(price_el.get_text(strip=True)) if price_el else None
+
+        href = link_el.get('href', '') if link_el else ''
+        link = href if href.startswith('http') else BASE_URL + href
+
+        img = ''
+        if img_el:
+            src = img_el.get('data-src') or img_el.get('src') or ''
+            img = src if src.startswith('http') else BASE_URL + src
+
+        results.append({
+            'name': name,
+            'price': price,
+            'link': link,
+            'image': img,
+            'in_stock': True,  # listing page only shows available items
+        })
+
+        if len(results) >= limit:
+            break
+
+    return results
+
+
 def search(query):
     results = []
     try:
-        url = f'{BASE_URL}/?s={requests.utils.quote(query)}&post_type=product'
-        resp = requests.get(url, headers=HEADERS, timeout=12)
+        url = f'{BASE_URL}/tw/product/index.php?kw={requests.utils.quote(query)}'
+        resp = requests.get(url, headers=HEADERS, timeout=15)
         resp.raise_for_status()
         soup = BeautifulSoup(resp.text, 'html.parser')
-
-        # WooCommerce standard product selectors
-        products = soup.select('ul.products li.product, .woocommerce-loop-product__link')
-        if not products:
-            products = soup.select('.product-item, .product_item, article.product')
-
-        for product in products[:10]:
-            name_el = (
-                product.select_one('.woocommerce-loop-product__title')
-                or product.select_one('h2.woocommerce-loop-product__title')
-                or product.select_one('h3')
-                or product.select_one('h2')
-            )
-            # Price: may show sale/regular
-            price_el = product.select_one('ins .woocommerce-Price-amount') or \
-                       product.select_one('.woocommerce-Price-amount')
-            link_el = product.select_one('a.woocommerce-loop-product__link') or product.select_one('a')
-            img_el = product.select_one('img')
-
-            if not name_el:
-                continue
-
-            name = name_el.get_text(strip=True)
-            price = extract_price(price_el.get_text(strip=True)) if price_el else None
-            link = link_el.get('href', '') if link_el else ''
-            img = ''
-            if img_el:
-                img = img_el.get('data-src') or img_el.get('src') or ''
-
-            out_of_stock_el = product.select_one('.out-of-stock, .stock.out-of-stock')
-            in_stock = out_of_stock_el is None
-
-            results.append({
-                'name': name,
-                'price': price,
-                'link': link if link.startswith('http') else BASE_URL + link,
-                'image': img,
-                'in_stock': in_stock,
-            })
+        results = _parse_items(soup, limit=10)
     except Exception as e:
         print(f'[山海山] 錯誤: {e}')
-
     return results
+
+
+def get_home_items(limit=12):
+    """Fetch New Arrivals from the shanhaisan homepage for recommendations."""
+    items = []
+    try:
+        resp = requests.get(BASE_URL, headers=HEADERS, timeout=15)
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        items = _parse_items(soup, limit=limit)
+    except Exception as e:
+        print(f'[山海山首頁] 錯誤: {e}')
+    return items

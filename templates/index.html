@@ -174,7 +174,7 @@
       找到最好的<span class="text-amber-400">黑膠價格</span>
     </h1>
     <p class="text-gray-400 text-base mb-8">
-      同時搜尋山海山、燭光唱片、誠品線上及蝦皮賣家，一鍵比價
+      同時搜尋山海山、燭光唱片、誠品線上，一鍵比價
     </p>
 
     <!-- Main search form -->
@@ -249,63 +249,87 @@
 ============================================================ -->
 <section id="recommendations" class="max-w-7xl mx-auto px-4 pb-16">
   <!-- Section title -->
-  <div class="flex items-center gap-3 mb-6">
+  <div class="flex items-center gap-3 mb-8">
     <div class="w-1 h-8 bg-amber-400 rounded-full"></div>
-    <h2 class="text-2xl font-bold text-white">精選推薦</h2>
+    <h2 class="text-2xl font-bold text-white">店家推薦新品</h2>
+    <span class="text-gray-600 text-sm">每日自動更新</span>
   </div>
 
-  <!-- Tabs -->
-  <div class="flex gap-2 mb-6 flex-wrap">
-    <button class="tab-btn active text-sm font-semibold px-4 py-2 rounded-full border border-[#2a2a2a] transition-all" onclick="switchTab('weekly_hot', this)">🔥 本週熱門</button>
-    <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-[#2a2a2a] bg-[#141414] text-gray-400 hover:text-amber-400 transition-all" onclick="switchTab('classics', this)">💿 經典必收</button>
-    <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-[#2a2a2a] bg-[#141414] text-gray-400 hover:text-amber-400 transition-all" onclick="switchTab('new_arrivals', this)">✨ 新品上架</button>
-    <button class="tab-btn text-sm font-semibold px-4 py-2 rounded-full border border-[#2a2a2a] bg-[#141414] text-gray-400 hover:text-amber-400 transition-all" onclick="switchTab('mandarin', this)">🎵 華語精選</button>
-  </div>
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
 
-  <!-- Tab content -->
-  {% set tabs = [
-    ('weekly_hot', recommendations.weekly_hot),
-    ('classics',   recommendations.classics),
-    ('new_arrivals', recommendations.new_arrivals),
-    ('mandarin',   recommendations.mandarin)
-  ] %}
-
-  {% for tab_id, items in tabs %}
-  <div id="tab-{{ tab_id }}" class="tab-content {% if not loop.first %}hidden{% endif %}">
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-      {% for album in items %}
-      <div class="vinyl-card bg-[#141414] rounded-2xl overflow-hidden border border-[#2a2a2a] hover:border-amber-400/30 cursor-pointer"
-           onclick="quickSearch('{{ album.title }} {{ album.artist }}')">
-        <!-- Cover image -->
-        <div class="relative aspect-square overflow-hidden bg-[#0a0a0a]">
-          <img src="{{ album.image }}"
-               alt="{{ album.title }}"
-               class="w-full h-full object-cover"
-               onerror="this.src='https://placehold.co/300x300/141414/f59e0b?text=♪'" />
-          <!-- Genre badge -->
-          <span class="absolute top-2 right-2 text-xs font-semibold px-2 py-0.5 rounded-full bg-black/70 text-amber-400 border border-amber-400/30">
-            {{ album.genre }}
-          </span>
-          <!-- Search overlay -->
-          <div class="absolute inset-0 bg-black/60 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
-            <span class="text-white font-bold text-sm bg-amber-500 px-4 py-2 rounded-full">🔍 比價</span>
-          </div>
-        </div>
-        <!-- Info -->
-        <div class="p-3 sm:p-3">
-          <h3 class="font-bold text-white text-base sm:text-sm leading-tight line-clamp-2 mb-1">{{ album.title }}</h3>
-          <p class="text-gray-400 text-sm sm:text-xs mb-1">{{ album.artist }}</p>
-          <p class="text-gray-600 text-sm sm:text-xs mb-2">{{ album.year }}</p>
-          {% if album.avg_price %}
-          <p class="text-amber-400 text-sm sm:text-xs font-semibold">均價約 NT$ {{ album.avg_price }}</p>
-          {% endif %}
-          <p class="text-gray-500 text-sm sm:text-xs mt-1 line-clamp-2 leading-relaxed">{{ album.description }}</p>
-        </div>
+    <!-- 山海山 block -->
+    <div>
+      <div class="flex items-center gap-3 mb-4">
+        <span class="badge-amber px-3 py-1.5 rounded-full text-sm font-semibold">🎵 山海山唱片行</span>
+        <a href="https://www.shsmusic.tw" target="_blank" rel="noopener noreferrer"
+           class="text-xs text-gray-600 hover:text-amber-400 transition-colors">前往官網 →</a>
       </div>
-      {% endfor %}
+      {% set shs = recommendations.shanhaisan %}
+      {% if shs %}
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3">
+        {% for item in shs[:9] %}
+        <a href="{{ item.link }}" target="_blank" rel="noopener noreferrer"
+           class="vinyl-card bg-[#141414] rounded-xl overflow-hidden border border-[#2a2a2a] hover:border-amber-400/40 group block">
+          <div class="relative aspect-square overflow-hidden bg-[#0a0a0a]">
+            <img src="{{ item.image or 'https://placehold.co/300x300/141414/f59e0b?text=♪' }}"
+                 alt="{{ item.name }}"
+                 class="w-full h-full object-cover"
+                 onerror="this.src='https://placehold.co/300x300/141414/f59e0b?text=♪'" />
+            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <span class="text-white text-xs font-bold bg-amber-500 px-3 py-1 rounded-full">查看</span>
+            </div>
+          </div>
+          <div class="p-2">
+            <p class="text-white text-xs font-semibold line-clamp-2 leading-snug mb-1">{{ item.name }}</p>
+            {% if item.price %}
+            <p class="text-amber-400 text-xs font-bold">NT$ {{ "{:,}".format(item.price) }}</p>
+            {% endif %}
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-gray-600 text-sm py-8 text-center">暫無資料</div>
+      {% endif %}
     </div>
+
+    <!-- 燭光唱片 block -->
+    <div>
+      <div class="flex items-center gap-3 mb-4">
+        <span class="badge-red px-3 py-1.5 rounded-full text-sm font-semibold">🕯 燭光唱片</span>
+        <a href="https://www.candlelightrecords.tw" target="_blank" rel="noopener noreferrer"
+           class="text-xs text-gray-600 hover:text-red-400 transition-colors">前往官網 →</a>
+      </div>
+      {% set cdl = recommendations.candlelight %}
+      {% if cdl %}
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-3">
+        {% for item in cdl[:9] %}
+        <a href="{{ item.link }}" target="_blank" rel="noopener noreferrer"
+           class="vinyl-card bg-[#141414] rounded-xl overflow-hidden border border-[#2a2a2a] hover:border-red-400/40 group block">
+          <div class="relative aspect-square overflow-hidden bg-[#0a0a0a]">
+            <img src="{{ item.image or 'https://placehold.co/300x300/141414/ef4444?text=♪' }}"
+                 alt="{{ item.name }}"
+                 class="w-full h-full object-cover"
+                 onerror="this.src='https://placehold.co/300x300/141414/ef4444?text=♪'" />
+            <div class="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+              <span class="text-white text-xs font-bold bg-red-500 px-3 py-1 rounded-full">查看</span>
+            </div>
+          </div>
+          <div class="p-2">
+            <p class="text-white text-xs font-semibold line-clamp-2 leading-snug mb-1">{{ item.name }}</p>
+            {% if item.price %}
+            <p class="text-red-400 text-xs font-bold">NT$ {{ "{:,}".format(item.price) }}</p>
+            {% endif %}
+          </div>
+        </a>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="text-gray-600 text-sm py-8 text-center">暫無資料</div>
+      {% endif %}
+    </div>
+
   </div>
-  {% endfor %}
 </section>
 
 <!-- ============================================================
@@ -320,25 +344,13 @@
     <span>Vinyl 比價系統</span>
   </div>
   <p class="text-xs text-gray-700">搜尋結果來自各唱片行網站，價格僅供參考，以各店實際標價為準</p>
-  <p class="text-xs text-gray-800 mt-1">山海山 · 燭光唱片 · 誠品線上 · 蝦皮</p>
+  <p class="text-xs text-gray-800 mt-1">山海山 · 燭光唱片 · 誠品線上</p>
 </footer>
 
 <!-- ============================================================
      JAVASCRIPT
 ============================================================ -->
 <script>
-// ---- Tab switching ----
-function switchTab(tabId, btn) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
-  document.querySelectorAll('.tab-btn').forEach(b => {
-    b.classList.remove('active', 'text-black');
-    b.classList.add('bg-[#141414]', 'text-gray-400');
-  });
-  document.getElementById('tab-' + tabId).classList.remove('hidden');
-  btn.classList.add('active');
-  btn.classList.remove('bg-[#141414]', 'text-gray-400');
-}
-
 // ---- Search ----
 function quickSearch(term) {
   document.getElementById('heroSearchInput').value = term;
