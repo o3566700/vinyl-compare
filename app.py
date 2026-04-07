@@ -200,6 +200,12 @@ def api_shanhaisan_ranking():
     return jsonify(data)
 
 
+@app.route('/api/shanhaisan-new')
+def api_shanhaisan_new():
+    data = _get_extra('shanhaisan_new', extra_rank.shanhaisan_new_arrivals)
+    return jsonify(data)
+
+
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
     app.run(debug=False, port=port, host='0.0.0.0')

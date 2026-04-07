@@ -28,6 +28,7 @@ SHSMUSIC_BASE = 'https://www.shsmusic.tw'
 CANDLELIGHT_NEW_URL = f'{CANDLELIGHT_BASE}/category/163420'
 CANDLELIGHT_USED_URL = f'{CANDLELIGHT_BASE}/category/163537'
 SHSMUSIC_HOT_URL = f'{SHSMUSIC_BASE}/tw/product/index.php?kind=9&order=hot'
+SHSMUSIC_NEW_URL = f'{SHSMUSIC_BASE}/tw/product/index.php?kind=9&order=new'
 
 
 def _digits(text):
@@ -99,12 +100,11 @@ def candlelight_used_ranking():
 # ---------------------------------------------------------------------------
 # SHS Music (山海山) — HTML scraping
 # ---------------------------------------------------------------------------
-def shanhaisan_ranking():
-    """山海山 — 黑膠唱片 熱門 top 10."""
+def _shsmusic_scrape(url, label):
     results = []
     try:
         headers = {**HEADERS, 'Referer': SHSMUSIC_BASE + '/'}
-        r = requests.get(SHSMUSIC_HOT_URL, headers=headers, timeout=15)
+        r = requests.get(url, headers=headers, timeout=15)
         r.encoding = 'utf-8'
         soup = BeautifulSoup(r.text, 'html.parser')
 
@@ -148,5 +148,15 @@ def shanhaisan_ranking():
                 'in_stock': True,
             })
     except Exception as e:
-        print(f'[山海山排行] 錯誤: {e}')
+        print(f'[山海山{label}] 錯誤: {e}')
     return results
+
+
+def shanhaisan_ranking():
+    """山海山 — 黑膠唱片 熱門 top 10."""
+    return _shsmusic_scrape(SHSMUSIC_HOT_URL, '熱門')
+
+
+def shanhaisan_new_arrivals():
+    """山海山 — 黑膠唱片 最新到貨 top 10."""
+    return _shsmusic_scrape(SHSMUSIC_NEW_URL, '最新到貨')
