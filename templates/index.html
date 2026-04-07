@@ -177,34 +177,6 @@
       同時搜尋山海山、燭光唱片、誠品線上及蝦皮賣家，一鍵比價
     </p>
 
-    <!-- Main search form -->
-    <form id="heroSearchForm" class="flex gap-2 max-w-lg mx-auto" onsubmit="handleSearch(event, 'hero')">
-      <div class="flex-1 relative">
-        <span class="absolute left-4 top-1/2 -translate-y-1/2 text-gray-500 text-lg">🔍</span>
-        <input id="heroSearchInput"
-               type="text"
-               autocomplete="off"
-               inputmode="search"
-               placeholder="輸入唱片名稱或歌手..."
-               class="w-full bg-[#1a1a1a] border-2 border-[#2a2a2a] rounded-2xl pl-12 pr-4 py-4 text-gray-100 placeholder-gray-500 focus:outline-none focus:border-amber-400 focus:ring-2 focus:ring-amber-400/30 transition-all text-base gold-glow-sm" />
-      </div>
-      <button type="submit"
-              class="flex-shrink-0 bg-amber-500 hover:bg-amber-400 active:bg-amber-600 text-black font-bold px-5 sm:px-6 py-4 rounded-2xl text-base transition-colors gold-glow whitespace-nowrap">
-        比價
-      </button>
-    </form>
-
-    <!-- Quick search tags -->
-    <div class="flex flex-wrap justify-center gap-2 mt-4">
-      <span class="text-gray-500 text-xs self-center">熱門：</span>
-      {% set tags = ['Miles Davis', 'Pink Floyd', '羅大佑', 'Beatles', 'Daft Punk', 'Coltrane'] %}
-      {% for tag in tags %}
-      <button onclick="quickSearch('{{ tag }}')"
-              class="text-sm bg-[#1a1a1a] hover:bg-[#2a2a2a] active:bg-[#333] border border-[#2a2a2a] hover:border-amber-400/50 text-gray-400 hover:text-amber-400 px-3 py-2 rounded-full transition-all min-h-[36px]">
-        {{ tag }}
-      </button>
-      {% endfor %}
-    </div>
   </div>
 </section>
 
@@ -341,25 +313,20 @@ function switchTab(tabId, btn) {
 
 // ---- Search ----
 function quickSearch(term) {
-  document.getElementById('heroSearchInput').value = term;
   document.getElementById('headerSearchInput').value = term;
   doSearch(term);
 }
 
 function handleSearch(e, source) {
   e.preventDefault();
-  const input = source === 'hero' ? 'heroSearchInput' : 'headerSearchInput';
-  const query = document.getElementById(input).value.trim();
+  const query = document.getElementById('headerSearchInput').value.trim();
   if (!query) return;
-  document.getElementById('heroSearchInput').value = query;
-  document.getElementById('headerSearchInput').value = query;
   doSearch(query);
 }
 
 function clearSearch() {
   document.getElementById('searchResults').classList.add('hidden');
   document.getElementById('recommendations').classList.remove('hidden');
-  document.getElementById('heroSearchInput').value = '';
   document.getElementById('headerSearchInput').value = '';
   document.getElementById('searchResultsContainer').innerHTML = '';
 }
