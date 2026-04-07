@@ -1,6 +1,7 @@
 import os
 import time
 import re
+import traceback
 import concurrent.futures
 from flask import Flask, render_template, jsonify, request
 
@@ -171,39 +172,58 @@ _extra_cache: dict = {}
 _EXTRA_TTL = 3600
 
 
-def _get_extra(key, fn):
+def _get_extra(key, fn, label=''):
     now = time.time()
     if key in _extra_cache:
         data, ts = _extra_cache[key]
         if now - ts < _EXTRA_TTL:
             return data
-    data = fn()
+    try:
+        data = fn()
+    except Exception as e:
+        print(f'[_get_extra:{label}] 未捕捉例外: {e}')
+        print(traceback.format_exc())
+        data = []
     _extra_cache[key] = (data, now)
     return data
 
 
 @app.route('/api/candlelight-new-ranking')
 def api_candlelight_new_ranking():
-    data = _get_extra('candlelight_new', extra_rank.candlelight_new_ranking)
+    data = _get_extra('candlelight_new', extra_rank.candlelight_new_ranking, '燭光全新')
     return jsonify(data)
 
 
 @app.route('/api/candlelight-used-ranking')
 def api_candlelight_used_ranking():
-    data = _get_extra('candlelight_used', extra_rank.candlelight_used_ranking)
+    data = _get_extra('candlelight_used', extra_rank.candlelight_used_ranking, '燭光二手')
     return jsonify(data)
 
 
 @app.route('/api/shanhaisan-ranking')
 def api_shanhaisan_ranking():
-    data = _get_extra('shanhaisan', extra_rank.shanhaisan_ranking)
-    return jsonify(data)
+    print('[api/shanhaisan-ranking] 開始請求')
+    try:
+        data = _get_extra('shanhaisan', extra_rank.shanhaisan_ranking, '山海山熱門')
+        print(f'[api/shanhaisan-ranking] 回傳 {len(data)} 筆')
+        return jsonify(data)
+    except Exception as e:
+        print(f'[api/shanhaisan-ranking] 例外: {e}')
+        print(traceback.format_exc())
+        return jsonify([])
 
 
 @app.route('/api/shanhaisan-new')
 def api_shanhaisan_new():
-    data = _get_extra('shanhaisan_new', extra_rank.shanhaisan_new_arrivals)
-    return jsonify(data)
+    print('[api/shanhaisan-new] 開始請求')
+    try:
+        data = _get_extra('shanhaisan_new', extra_rank.shanhaisan_new_arrivals, '山海山最新')
+        print(f'[api/shanhaisan-new] 回傳 {len(data)} 筆')
+        return jsonify(data)
+    except Exception as e:
+        print(f'[api/shanhaisan-new] 例外: {e}')
+        print(traceback.format_exc())
+        return jsonify([])
 
 
 if __name__ == '__main__':
