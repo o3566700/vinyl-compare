@@ -101,52 +101,15 @@ def candlelight_used_ranking():
 # ---------------------------------------------------------------------------
 def shanhaisan_ranking():
     """山海山 — 黑膠唱片 熱門 top 10."""
-    results = []
     try:
+        from scrapers.shanhaisan import _parse_items
         headers = {**HEADERS, 'Referer': SHSMUSIC_BASE + '/'}
         r = requests.get(SHSMUSIC_HOT_URL, headers=headers, timeout=15)
-        r.encoding = 'utf-8'
+        r.raise_for_status()
         soup = BeautifulSoup(r.text, 'html.parser')
-
-        pro_list = soup.select_one('.pro-list')
-        if not pro_list:
-            return results
-
-        for item in pro_list.select('.item')[:10]:
-            title_tw = item.select_one('.title .txt-tw')
-            title_en = item.select_one('.title .txt-en')
-            name = (title_tw.get_text(strip=True) if title_tw else '') or \
-                   (title_en.get_text(strip=True) if title_en else '')
-            if not name:
-                continue
-
-            pic_el = item.select_one('a.pic')
-            href = pic_el.get('href', '') if pic_el else ''
-            link = (SHSMUSIC_BASE + href) if href.startswith('/') else href
-
-            img_el = item.select_one('a.pic img')
-            img = ''
-            if img_el:
-                src = img_el.get('src', '')
-                img = (SHSMUSIC_BASE + src) if src.startswith('/') else src
-
-            # Prefer 特價 over 售價
-            price = None
-            for pel in item.select('.list-unstyled li'):
-                text = pel.get_text(strip=True)
-                v = _digits(text)
-                if v and ('特價' in text or '售價' in text):
-                    price = v
-                    if '特價' in text:
-                        break
-
-            results.append({
-                'name': name,
-                'price': price,
-                'image': img,
-                'link': link,
-                'in_stock': True,
-            })
+        results = _parse_items(soup, limit=10)
+        print(f'[山海山排行] 成功抓取 {len(results)} 筆')
+        return results
     except Exception as e:
         print(f'[山海山排行] 錯誤: {e}')
-    return results
+        return []

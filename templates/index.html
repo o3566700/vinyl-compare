@@ -857,7 +857,15 @@ async function loadRanking(gridId, apiUrl) {
     const data = await resp.json();
     // eslite-ranking returns {items:[...], error:...}; others return flat []
     const items = Array.isArray(data) ? data : (data.items || []);
-    grid.innerHTML = buildRankCards(items);
+    if (items.length === 0) {
+      grid.innerHTML = `<div class="ranking-error">
+        <div style="font-size:28px;margin-bottom:8px;">📭</div>
+        <div>暫時無法取得資料</div>
+        <div style="font-size:11px;color:var(--text-dim);margin-top:4px;">請稍後再試</div>
+      </div>`;
+    } else {
+      grid.innerHTML = buildRankCards(items);
+    }
   } catch(err) {
     grid.innerHTML = `<div class="ranking-error">
       <div style="font-size:28px;margin-bottom:8px;">📡</div>

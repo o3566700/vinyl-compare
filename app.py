@@ -177,26 +177,49 @@ def _get_extra(key, fn):
         data, ts = _extra_cache[key]
         if now - ts < _EXTRA_TTL:
             return data
-    data = fn()
+    try:
+        data = fn()
+    except Exception as e:
+        print(f'[排行快取] {key} 錯誤: {e}')
+        data = []
     _extra_cache[key] = (data, now)
     return data
 
 
 @app.route('/api/candlelight-new-ranking')
 def api_candlelight_new_ranking():
-    data = _get_extra('candlelight_new', extra_rank.candlelight_new_ranking)
+    try:
+        data = _get_extra('candlelight_new', extra_rank.candlelight_new_ranking)
+    except Exception as e:
+        print(f'[燭光全新排行] API 錯誤: {e}')
+        data = []
     return jsonify(data)
 
 
 @app.route('/api/candlelight-used-ranking')
 def api_candlelight_used_ranking():
-    data = _get_extra('candlelight_used', extra_rank.candlelight_used_ranking)
+    try:
+        data = _get_extra('candlelight_used', extra_rank.candlelight_used_ranking)
+    except Exception as e:
+        print(f'[燭光二手排行] API 錯誤: {e}')
+        data = []
     return jsonify(data)
 
 
 @app.route('/api/shanhaisan-ranking')
 def api_shanhaisan_ranking():
-    data = _get_extra('shanhaisan', extra_rank.shanhaisan_ranking)
+    try:
+        data = _get_extra('shanhaisan', extra_rank.shanhaisan_ranking)
+        if not data:
+            print('[山海山排行] 排行頁無資料，啟動 fallback 搜尋「黑膠」')
+            data = shanhaisan.search('黑膠')[:10]
+            if data:
+                print(f'[山海山排行] fallback 成功，取得 {len(data)} 筆')
+            else:
+                print('[山海山排行] fallback 也無資料')
+    except Exception as e:
+        print(f'[山海山排行] API 錯誤: {e}')
+        data = []
     return jsonify(data)
 
 
