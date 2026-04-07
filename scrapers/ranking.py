@@ -4,6 +4,7 @@ Ranking scrapers for additional vinyl record stores.
 Provides top-10 lists from:
   - Candlelight Records new vinyl  (燭光唱片 全新黑膠)
   - Candlelight Records used vinyl (燭光唱片 二手老膠)
+  - Candlelight Records 7-inch EP  (燭光唱片 7吋EP)
   - SHS Music hot vinyl            (山海山 黑膠唱片 熱門)
 
 ESLite ranking is handled by scrapers/eslite_ranking.py.
@@ -48,7 +49,6 @@ CANDLELIGHT_NEW_URL = f'{CANDLELIGHT_BASE}/category/163420'
 CANDLELIGHT_USED_URL = f'{CANDLELIGHT_BASE}/category/163537'
 CANDLELIGHT_EP_URL = f'{CANDLELIGHT_BASE}/category/163853'
 SHSMUSIC_HOT_URL = f'{SHSMUSIC_BASE}/tw/product/index.php?kind=9&order=hot'
-SHSMUSIC_NEW_URL = f'{SHSMUSIC_BASE}/tw/product/index.php?kind=9&order=new'
 
 
 def _session_with_retry():
@@ -110,7 +110,7 @@ def _candlelight_scrape(url, label):
                 if m:
                     img = m.group(1).strip('"\'')
 
-            in_stock = item.select_one('.pt_sold_out') is None
+            in_stock = item.select_one('.pt_soldout') is None
 
             results.append({
                 'name': name,
@@ -240,8 +240,3 @@ def _shsmusic_scrape(url, label):
 def shanhaisan_ranking():
     """山海山 — 黑膠唱片 熱門 top 10."""
     return _shsmusic_scrape(SHSMUSIC_HOT_URL, '熱門')
-
-
-def shanhaisan_new_arrivals():
-    """山海山 — 黑膠唱片 最新到貨 top 10."""
-    return _shsmusic_scrape(SHSMUSIC_NEW_URL, '最新到貨')

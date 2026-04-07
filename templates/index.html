@@ -599,7 +599,7 @@
 
   <div class="gold-divider"></div>
 
-  <!-- 3b. 燭光唱片 7吋EP -->
+  <!-- 4. 燭光唱片 7吋EP -->
   <section class="section-gap">
     <div class="section-header">
       <div class="section-accent"></div>
@@ -616,7 +616,7 @@
 
   <div class="gold-divider"></div>
 
-  <!-- 4. 山海山 黑膠唱片 熱門 -->
+  <!-- 5. 山海山 黑膠唱片 熱門 -->
   <section class="section-gap">
     <div class="section-header">
       <div class="section-accent"></div>
@@ -632,21 +632,6 @@
   </section>
 
   <div class="gold-divider"></div>
-
-  <!-- 5. 山海山 最新到貨 -->
-  <section class="section-gap">
-    <div class="section-header">
-      <div class="section-accent"></div>
-      <div class="section-title-block">
-        <div class="section-title">山海山 — 最新到貨</div>
-        <div class="section-subtitle">shsmusic.tw · 最新入庫黑膠 Top 10</div>
-      </div>
-      <span class="section-badge badge-amber">山海山・新貨</span>
-    </div>
-    <div class="ranking-grid" id="shanhaisan-new-grid">
-      {% for _ in range(5) %}<div class="rank-skeleton"><div class="skeleton sk-cover"></div><div class="sk-body"><div class="skeleton sk-line"></div><div class="skeleton sk-line" style="width:80%"></div><div class="skeleton sk-line" style="width:50%"></div></div></div>{% endfor %}
-    </div>
-  </section>
 
   <div class="gold-divider"></div>
 
@@ -664,17 +649,17 @@
     </div>
     <div class="reco-grid">
       {% for item in shs %}
-      <div class="reco-card" onclick="quickSearch('{{ item.name | replace("'", "\\'") }}')">
+      <a class="reco-card" href="{{ item.link }}" target="_blank" rel="noopener noreferrer">
         <div class="reco-cover">
           {% if item.image %}<img src="{{ item.image }}" alt="{{ item.name }}" loading="lazy" onerror="this.style.display='none'" />{% endif %}
-          <div class="reco-overlay"><span class="reco-overlay-btn">🔍 比價</span></div>
+          <div class="reco-overlay"><span class="reco-overlay-btn">→ 前往購買</span></div>
         </div>
         <div class="reco-body">
           <div class="reco-title">{{ item.name }}</div>
           {% if item.price %}<div class="reco-price">NT$ {{ item.price | int }}</div>
           {% else %}<div class="reco-na">洽詢</div>{% endif %}
         </div>
-      </div>
+      </a>
       {% endfor %}
     </div>
   </section>
@@ -695,17 +680,17 @@
     </div>
     <div class="reco-grid">
       {% for item in cdl %}
-      <div class="reco-card" onclick="quickSearch('{{ item.name | replace("'", "\\'") }}')">
+      <a class="reco-card" href="{{ item.link }}" target="_blank" rel="noopener noreferrer">
         <div class="reco-cover">
           {% if item.image %}<img src="{{ item.image }}" alt="{{ item.name }}" loading="lazy" onerror="this.style.display='none'" />{% endif %}
-          <div class="reco-overlay"><span class="reco-overlay-btn">🔍 比價</span></div>
+          <div class="reco-overlay"><span class="reco-overlay-btn">→ 前往購買</span></div>
         </div>
         <div class="reco-body">
           <div class="reco-title">{{ item.name }}</div>
           {% if item.price %}<div class="reco-price">NT$ {{ item.price | int }}</div>
           {% else %}<div class="reco-na">洽詢</div>{% endif %}
         </div>
-      </div>
+      </a>
       {% endfor %}
     </div>
   </section>
@@ -907,7 +892,6 @@ document.addEventListener('DOMContentLoaded', () => {
   loadRanking('candlelight-used-grid', '/api/candlelight-used-ranking');
   loadRanking('candlelight-ep-grid',   '/api/candlelight-ep-ranking');
   loadRanking('shanhaisan-grid',       '/api/shanhaisan-ranking');
-  loadRanking('shanhaisan-new-grid',   '/api/shanhaisan-new');
 });
 </script>
 

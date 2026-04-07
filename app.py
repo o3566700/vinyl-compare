@@ -235,24 +235,11 @@ def api_candlelight_ep_ranking():
 def api_shanhaisan_ranking():
     print('[api/shanhaisan-ranking] 開始請求')
     try:
-        data = _get_extra('shanhaisan', extra_rank.shanhaisan_ranking, '山海山熱門', 'shanhaisan_hot.json')
+        data = _get_extra('shanhaisan', extra_rank.shanhaisan_ranking, '山海山熱門', 'shanhaisan.json')
         print(f'[api/shanhaisan-ranking] 回傳 {len(data)} 筆')
         return jsonify(data)
     except Exception as e:
         print(f'[api/shanhaisan-ranking] 例外: {e}')
-        print(traceback.format_exc())
-        return jsonify([])
-
-
-@app.route('/api/shanhaisan-new')
-def api_shanhaisan_new():
-    print('[api/shanhaisan-new] 開始請求')
-    try:
-        data = _get_extra('shanhaisan_new', extra_rank.shanhaisan_new_arrivals, '山海山最新', 'shanhaisan_new.json')
-        print(f'[api/shanhaisan-new] 回傳 {len(data)} 筆')
-        return jsonify(data)
-    except Exception as e:
-        print(f'[api/shanhaisan-new] 例外: {e}')
         print(traceback.format_exc())
         return jsonify([])
 
