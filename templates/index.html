@@ -599,6 +599,23 @@
 
   <div class="gold-divider"></div>
 
+  <!-- 3b. 燭光唱片 7吋EP -->
+  <section class="section-gap">
+    <div class="section-header">
+      <div class="section-accent"></div>
+      <div class="section-title-block">
+        <div class="section-title">燭光唱片 — 7吋黑膠 EP</div>
+        <div class="section-subtitle">candlelightrecords.tw · 7吋EP Top 10</div>
+      </div>
+      <span class="section-badge badge-red">燭光・EP</span>
+    </div>
+    <div class="ranking-grid" id="candlelight-ep-grid">
+      {% for _ in range(5) %}<div class="rank-skeleton"><div class="skeleton sk-cover"></div><div class="sk-body"><div class="skeleton sk-line"></div><div class="skeleton sk-line" style="width:80%"></div><div class="skeleton sk-line" style="width:50%"></div></div></div>{% endfor %}
+    </div>
+  </section>
+
+  <div class="gold-divider"></div>
+
   <!-- 4. 山海山 黑膠唱片 熱門 -->
   <section class="section-gap">
     <div class="section-header">
@@ -888,6 +905,7 @@ document.addEventListener('DOMContentLoaded', () => {
   loadRanking('eslite-grid',           '/api/eslite-ranking');
   loadRanking('candlelight-new-grid',  '/api/candlelight-new-ranking');
   loadRanking('candlelight-used-grid', '/api/candlelight-used-ranking');
+  loadRanking('candlelight-ep-grid',   '/api/candlelight-ep-ranking');
   loadRanking('shanhaisan-grid',       '/api/shanhaisan-ranking');
   loadRanking('shanhaisan-new-grid',   '/api/shanhaisan-new');
 });

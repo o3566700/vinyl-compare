@@ -46,6 +46,7 @@ SHSMUSIC_BASE = 'https://www.shsmusic.tw'
 
 CANDLELIGHT_NEW_URL = f'{CANDLELIGHT_BASE}/category/163420'
 CANDLELIGHT_USED_URL = f'{CANDLELIGHT_BASE}/category/163537'
+CANDLELIGHT_EP_URL = f'{CANDLELIGHT_BASE}/category/163853'
 SHSMUSIC_HOT_URL = f'{SHSMUSIC_BASE}/tw/product/index.php?kind=9&order=hot'
 SHSMUSIC_NEW_URL = f'{SHSMUSIC_BASE}/tw/product/index.php?kind=9&order=new'
 
@@ -133,6 +134,11 @@ def candlelight_new_ranking():
 def candlelight_used_ranking():
     """燭光唱片 — 二手老膠 綜合排行 top 10."""
     return _candlelight_scrape(CANDLELIGHT_USED_URL, '二手老膠')
+
+
+def candlelight_ep_ranking():
+    """燭光唱片 — 7吋黑膠 EP 排行 top 10."""
+    return _candlelight_scrape(CANDLELIGHT_EP_URL, '7吋EP')
 
 
 # ---------------------------------------------------------------------------

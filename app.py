@@ -1,4 +1,5 @@
 import os
+import json
 import time
 import re
 import traceback
@@ -74,17 +75,27 @@ def _fetch_live_recommendations():
 
 
 def filter_relevant_items(items, query):
-    """Keep only items whose name contains at least one word from the search query."""
+    """Keep items whose name contains at least one CJK character or word from the query."""
     if not items or not query:
         return items
-    # Split on whitespace; keep words of 2+ chars
-    words = [w.lower() for w in re.split(r'\s+', query.strip()) if len(w) >= 2]
-    if not words:
+    q = query.strip().lower()
+    if not q:
         return items
+
+    # CJK characters (any single Chinese/Japanese/Korean character in the query)
+    cjk_chars = [c for c in q if '\u4e00' <= c <= '\u9fff' or '\u3040' <= c <= '\u30ff']
+    # ASCII words of 2+ chars
+    ascii_words = [w for w in re.split(r'[\s\W]+', q) if len(w) >= 2 and w.isascii()]
+
+    if not cjk_chars and not ascii_words:
+        return items
+
     filtered = []
     for item in items:
-        name_lower = (item.get('name') or '').lower()
-        if any(word in name_lower for word in words):
+        name = (item.get('name') or '').lower()
+        # Match if any CJK char appears in name, OR any ascii word appears in name
+        if (cjk_chars and any(c in name for c in cjk_chars)) or \
+           (ascii_words and any(w in name for w in ascii_words)):
             filtered.append(item)
     return filtered
 
@@ -167,12 +178,24 @@ def api_eslite_ranking():
 
 # ---------------------------------------------------------------------------
 # Additional ranking endpoints (燭光 / 山海山) — 1-hour in-memory cache
+# with JSON fallback when live scraping fails or returns empty
 # ---------------------------------------------------------------------------
 _extra_cache: dict = {}
 _EXTRA_TTL = 3600
+_DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
 
 
-def _get_extra(key, fn, label=''):
+def _load_fallback(filename):
+    """Load cached JSON data from the data/ directory."""
+    path = os.path.join(_DATA_DIR, filename)
+    try:
+        with open(path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except Exception:
+        return []
+
+
+def _get_extra(key, fn, label='', fallback_file=None):
     now = time.time()
     if key in _extra_cache:
         data, ts = _extra_cache[key]
@@ -184,19 +207,27 @@ def _get_extra(key, fn, label=''):
         print(f'[_get_extra:{label}] 未捕捉例外: {e}')
         print(traceback.format_exc())
         data = []
+    if not data and fallback_file:
+        data = _load_fallback(fallback_file)
     _extra_cache[key] = (data, now)
     return data
 
 
 @app.route('/api/candlelight-new-ranking')
 def api_candlelight_new_ranking():
-    data = _get_extra('candlelight_new', extra_rank.candlelight_new_ranking, '燭光全新')
+    data = _get_extra('candlelight_new', extra_rank.candlelight_new_ranking, '燭光全新', 'candlelight_new.json')
     return jsonify(data)
 
 
 @app.route('/api/candlelight-used-ranking')
 def api_candlelight_used_ranking():
-    data = _get_extra('candlelight_used', extra_rank.candlelight_used_ranking, '燭光二手')
+    data = _get_extra('candlelight_used', extra_rank.candlelight_used_ranking, '燭光二手', 'candlelight_used.json')
+    return jsonify(data)
+
+
+@app.route('/api/candlelight-ep-ranking')
+def api_candlelight_ep_ranking():
+    data = _get_extra('candlelight_ep', extra_rank.candlelight_ep_ranking, '燭光EP', 'candlelight_ep.json')
     return jsonify(data)
 
 
@@ -204,7 +235,7 @@ def api_candlelight_used_ranking():
 def api_shanhaisan_ranking():
     print('[api/shanhaisan-ranking] 開始請求')
     try:
-        data = _get_extra('shanhaisan', extra_rank.shanhaisan_ranking, '山海山熱門')
+        data = _get_extra('shanhaisan', extra_rank.shanhaisan_ranking, '山海山熱門', 'shanhaisan_hot.json')
         print(f'[api/shanhaisan-ranking] 回傳 {len(data)} 筆')
         return jsonify(data)
     except Exception as e:
@@ -217,7 +248,7 @@ def api_shanhaisan_ranking():
 def api_shanhaisan_new():
     print('[api/shanhaisan-new] 開始請求')
     try:
-        data = _get_extra('shanhaisan_new', extra_rank.shanhaisan_new_arrivals, '山海山最新')
+        data = _get_extra('shanhaisan_new', extra_rank.shanhaisan_new_arrivals, '山海山最新', 'shanhaisan_new.json')
         print(f'[api/shanhaisan-new] 回傳 {len(data)} 筆')
         return jsonify(data)
     except Exception as e:

@@ -62,7 +62,7 @@ def fetch_hot_ranking(limit=10):
             'name': p.get('name', ''),
             'author': p.get('author', ''),
             'price': price,
-            'url': f'https://www.eslite.com/product/{product_id}' if product_id else '',
+            'link': f'https://www.eslite.com/product/{product_id}' if product_id else '',
             'image': img,
             'in_stock': int(p.get('stock', 0)) > 0,
         })
