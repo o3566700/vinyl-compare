@@ -8,8 +8,7 @@ HEADERS = {
     'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
 }
 
-# Candlelight Records Taiwan
-BASE_URL = 'https://www.candlelightrecords.com.tw'
+BASE_URL = 'https://www.candlelightrecords.tw'
 
 
 def extract_price(text):
@@ -19,85 +18,90 @@ def extract_price(text):
     return int(digits) if digits else None
 
 
+def _parse_items(soup, limit=10):
+    results = []
+    seen_hrefs = set()
+
+    for card in soup.select('a.pt_items_block[href]'):
+        href = card.get('href', '')
+        if not href or href in seen_hrefs:
+            continue
+        seen_hrefs.add(href)
+
+        # Name from .pt_title or .pt_photo title attribute
+        title_el = card.select_one('.pt_title')
+        photo_el = card.select_one('.pt_photo')
+        name = ''
+        if title_el:
+            name = title_el.get_text(strip=True)
+        elif photo_el:
+            name = photo_el.get('title', '').strip()
+        if not name:
+            continue
+
+        # Price from .pt_forsale .js_origin_price (in-stock items)
+        price_el = card.select_one('.js_origin_price, .pt_origin, [class*=pt_price]')
+        price = extract_price(price_el.get_text(strip=True)) if price_el else None
+
+        # Fallback: extract price from gtag onclick data
+        if not price:
+            onclick = card.get('onclick', '')
+            m = re.search(r"'price'\s*:\s*'([\d.]+)'", onclick)
+            if m:
+                price = int(float(m.group(1)))
+
+        # Sold-out check: element-based + text keywords
+        soldout_el = card.select_one('.pt_soldout b')
+        card_text = card.get_text()
+        sold_out_keywords = ['缺貨', '售完', 'sold out', 'Sold Out']
+        in_stock = not (soldout_el and soldout_el.get_text().strip()) and \
+                   not any(kw in card_text for kw in sold_out_keywords)
+
+        # Image from .pt_photo background-image style
+        img = ''
+        if photo_el:
+            style = photo_el.get('style', '')
+            m = re.search(r'url\(([^)]+)\)', style)
+            if m:
+                img = m.group(1).strip('"\'')
+
+        link = href if href.startswith('http') else BASE_URL + href
+
+        results.append({
+            'name': name,
+            'price': price,
+            'link': link,
+            'image': img,
+            'in_stock': in_stock,
+        })
+
+        if len(results) >= limit:
+            break
+
+    return results
+
+
 def search(query):
     results = []
     try:
-        # Try common search URL patterns for Taiwan e-commerce
-        search_urls = [
-            f'{BASE_URL}/search?q={requests.utils.quote(query)}',
-            f'{BASE_URL}/search?keyword={requests.utils.quote(query)}',
-            f'{BASE_URL}/?s={requests.utils.quote(query)}&post_type=product',
-        ]
-
-        resp = None
-        for url in search_urls:
-            try:
-                r = requests.get(url, headers=HEADERS, timeout=12, allow_redirects=True)
-                if r.status_code == 200:
-                    resp = r
-                    break
-            except Exception:
-                continue
-
-        if not resp:
-            return results
-
+        url = f'{BASE_URL}/search/{requests.utils.quote(query)}'
+        resp = requests.get(url, headers=HEADERS, timeout=15)
+        resp.raise_for_status()
         soup = BeautifulSoup(resp.text, 'html.parser')
-
-        # Shopline / WooCommerce / custom selectors
-        products = (
-            soup.select('.product-item')
-            or soup.select('.product-list .item')
-            or soup.select('ul.products li.product')
-            or soup.select('.goods-list .goods-item')
-            or soup.select('[class*="product"]')
-        )
-
-        for product in products[:10]:
-            name_el = (
-                product.select_one('.product-title')
-                or product.select_one('.goods-title')
-                or product.select_one('h2')
-                or product.select_one('h3')
-                or product.select_one('[class*="title"]')
-            )
-            price_el = (
-                product.select_one('.price')
-                or product.select_one('.goods-price')
-                or product.select_one('[class*="price"]')
-            )
-            link_el = product.select_one('a')
-            img_el = product.select_one('img')
-
-            if not name_el:
-                continue
-
-            name = name_el.get_text(strip=True)
-            if not name:
-                continue
-
-            price = extract_price(price_el.get_text(strip=True)) if price_el else None
-            link = link_el.get('href', '') if link_el else ''
-            img = ''
-            if img_el:
-                img = img_el.get('data-src') or img_el.get('data-original') or img_el.get('src') or ''
-
-            if link and not link.startswith('http'):
-                link = BASE_URL + link
-            if img and not img.startswith('http'):
-                img = BASE_URL + img
-
-            in_stock = 'out-of-stock' not in product.get('class', []) and \
-                       not product.select('.sold-out, .out-of-stock')
-
-            results.append({
-                'name': name,
-                'price': price,
-                'link': link,
-                'image': img,
-                'in_stock': in_stock,
-            })
+        results = _parse_items(soup, limit=10)
     except Exception as e:
         print(f'[燭光唱片] 錯誤: {e}')
-
     return results
+
+
+def get_home_items(limit=12):
+    """Fetch featured products from the candlelight homepage for recommendations."""
+    items = []
+    try:
+        resp = requests.get(BASE_URL, headers=HEADERS, timeout=15)
+        resp.raise_for_status()
+        soup = BeautifulSoup(resp.text, 'html.parser')
+        items = _parse_items(soup, limit=limit)
+    except Exception as e:
+        print(f'[燭光首頁] 錯誤: {e}')
+    return items

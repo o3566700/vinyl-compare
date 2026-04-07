@@ -1,14 +1,15 @@
-import json
 import os
+import time
+import re
 import concurrent.futures
 from flask import Flask, render_template, jsonify, request
 
-from scrapers import shanhaisan, candlelight, eslite, shopee
+from scrapers import shanhaisan, candlelight, eslite
+from scrapers.covers import get_cover
+from scrapers import eslite_ranking as eslite_rank
+from scrapers import ranking as extra_rank
 
 app = Flask(__name__)
-
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-RECO_FILE = os.path.join(BASE_DIR, 'data', 'recommendations.json')
 
 SOURCES = [
     {
@@ -29,29 +30,67 @@ SOURCES = [
         'color': 'emerald',
         'fn': eslite.search,
     },
-    {
-        'key': 'shopee_vinyl_voyage',
-        'name': 'Vinyl_voyage（蝦皮）',
-        'color': 'orange',
-        'fn': lambda q: shopee.search(q, 'Vinyl_voyage'),
-    },
-    {
-        'key': 'shopee_wshit1206',
-        'name': 'wshit1206（蝦皮）',
-        'color': 'violet',
-        'fn': lambda q: shopee.search(q, 'wshit1206'),
-    },
 ]
 
+# In-memory cache for live recommendations (1-hour TTL)
+_reco_cache = {'data': None, 'ts': 0}
+_RECO_TTL = 3600
 
-def load_recommendations():
-    with open(RECO_FILE, 'r', encoding='utf-8') as f:
-        return json.load(f)
+
+def _enrich_cover(item):
+    """If an item lacks a cover image, fetch one from iTunes."""
+    if not item.get('image'):
+        item['image'] = get_cover(item.get('name', ''))
+    return item
+
+
+def _fetch_live_recommendations():
+    now = time.time()
+    if _reco_cache['data'] and now - _reco_cache['ts'] < _RECO_TTL:
+        return _reco_cache['data']
+
+    def _shanhaisan():
+        items = shanhaisan.get_home_items(limit=12)
+        return [_enrich_cover(i) for i in items]
+
+    def _candlelight():
+        items = candlelight.get_home_items(limit=12)
+        return [_enrich_cover(i) for i in items]
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=2) as ex:
+        f_shs = ex.submit(_shanhaisan)
+        f_cdl = ex.submit(_candlelight)
+        shs_items = f_shs.result(timeout=20) if not f_shs.exception() else []
+        cdl_items = f_cdl.result(timeout=20) if not f_cdl.exception() else []
+
+    data = {
+        'shanhaisan': shs_items,
+        'candlelight': cdl_items,
+    }
+    _reco_cache['data'] = data
+    _reco_cache['ts'] = now
+    return data
+
+
+def filter_relevant_items(items, query):
+    """Keep only items whose name contains at least one word from the search query."""
+    if not items or not query:
+        return items
+    # Split on whitespace; keep words of 2+ chars
+    words = [w.lower() for w in re.split(r'\s+', query.strip()) if len(w) >= 2]
+    if not words:
+        return items
+    filtered = []
+    for item in items:
+        name_lower = (item.get('name') or '').lower()
+        if any(word in name_lower for word in words):
+            filtered.append(item)
+    return filtered
 
 
 @app.route('/')
 def index():
-    recommendations = load_recommendations()
+    recommendations = _fetch_live_recommendations()
     return render_template('index.html', recommendations=recommendations)
 
 
@@ -66,6 +105,10 @@ def api_search():
     def run_scraper(source):
         try:
             items = source['fn'](query)
+            # Fill missing cover images
+            for item in items:
+                if not item.get('image'):
+                    item['image'] = get_cover(query)
             return source['key'], {
                 'name': source['name'],
                 'color': source['color'],
@@ -80,11 +123,15 @@ def api_search():
                 'error': str(e),
             }
 
-    with concurrent.futures.ThreadPoolExecutor(max_workers=5) as executor:
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(SOURCES)) as executor:
         futures = {executor.submit(run_scraper, s): s for s in SOURCES}
         for future in concurrent.futures.as_completed(futures):
             key, data = future.result()
             results[key] = data
+
+    # Filter results by relevance: item name must contain at least one query word
+    for key in results:
+        results[key]['items'] = filter_relevant_items(results[key]['items'], query)
 
     # Find global minimum price across all results
     all_prices = [
@@ -105,7 +152,52 @@ def api_search():
 
 @app.route('/api/recommendations')
 def api_recommendations():
-    return jsonify(load_recommendations())
+    return jsonify(_fetch_live_recommendations())
+
+
+@app.route('/api/eslite-ranking')
+def api_eslite_ranking():
+    try:
+        items = eslite_rank.fetch_hot_ranking(limit=10)
+        return jsonify({'items': items, 'error': None})
+    except Exception as e:
+        return jsonify({'items': [], 'error': str(e)})
+
+
+# ---------------------------------------------------------------------------
+# Additional ranking endpoints (燭光 / 山海山) — 1-hour in-memory cache
+# ---------------------------------------------------------------------------
+_extra_cache: dict = {}
+_EXTRA_TTL = 3600
+
+
+def _get_extra(key, fn):
+    now = time.time()
+    if key in _extra_cache:
+        data, ts = _extra_cache[key]
+        if now - ts < _EXTRA_TTL:
+            return data
+    data = fn()
+    _extra_cache[key] = (data, now)
+    return data
+
+
+@app.route('/api/candlelight-new-ranking')
+def api_candlelight_new_ranking():
+    data = _get_extra('candlelight_new', extra_rank.candlelight_new_ranking)
+    return jsonify(data)
+
+
+@app.route('/api/candlelight-used-ranking')
+def api_candlelight_used_ranking():
+    data = _get_extra('candlelight_used', extra_rank.candlelight_used_ranking)
+    return jsonify(data)
+
+
+@app.route('/api/shanhaisan-ranking')
+def api_shanhaisan_ranking():
+    data = _get_extra('shanhaisan', extra_rank.shanhaisan_ranking)
+    return jsonify(data)
 
 
 if __name__ == '__main__':
