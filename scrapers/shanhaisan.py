@@ -53,6 +53,9 @@ def _parse_items(soup, limit=10):
         if not name:
             continue
 
+        # Full text for relevance filtering (Chinese + English)
+        search_text = ' '.join(filter(None, [name_tw, name_en, artist_tw, artist_en]))
+
         price_text = price_el.get_text(strip=True) if price_el else ''
         price = extract_price(price_text)
 
@@ -73,6 +76,7 @@ def _parse_items(soup, limit=10):
             'link': link,
             'image': img,
             'in_stock': in_stock,
+            'search_text': search_text,
         })
 
         if len(results) >= limit:
@@ -87,7 +91,7 @@ def search(query):
         url = f'{BASE_URL}/tw/product/index.php?kw={requests.utils.quote(query)}'
         resp = requests.get(url, headers=HEADERS, timeout=15)
         resp.raise_for_status()
-        soup = BeautifulSoup(resp.text, 'html.parser')
+        soup = BeautifulSoup(resp.content.decode('utf-8', errors='replace'), 'html.parser')
         results = _parse_items(soup, limit=10)
     except Exception as e:
         print(f'[山海山] 錯誤: {e}')
@@ -100,7 +104,7 @@ def get_home_items(limit=12):
     try:
         resp = requests.get(BASE_URL, headers=HEADERS, timeout=15)
         resp.raise_for_status()
-        soup = BeautifulSoup(resp.text, 'html.parser')
+        soup = BeautifulSoup(resp.content.decode('utf-8', errors='replace'), 'html.parser')
         items = _parse_items(soup, limit=limit)
     except Exception as e:
         print(f'[山海山首頁] 錯誤: {e}')

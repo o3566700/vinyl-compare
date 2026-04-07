@@ -58,8 +58,13 @@ def fetch_itunes_cover(name):
 def search(query):
     results = []
     try:
-        # Always append 黑膠 to restrict to vinyl category
-        vinyl_query = f'{query} 黑膠' if '黑膠' not in query and 'vinyl' not in query.lower() else query
+        # For non-CJK queries, append 黑膠 to restrict to vinyl category.
+        # For Chinese queries, 黑 character can accidentally match unrelated products.
+        has_cjk = any('\u4e00' <= c <= '\u9fff' for c in query)
+        if has_cjk or '黑膠' in query or 'vinyl' in query.lower():
+            vinyl_query = query
+        else:
+            vinyl_query = f'{query} 黑膠'
         params = {
             'keyword': vinyl_query,
             'page': 1,
@@ -80,6 +85,10 @@ def search(query):
             stock = fields.get('stock', '1')
             in_stock = str(stock) != '0'
 
+            authors = fields.get('author', [])
+            author_str = ' '.join(authors) if isinstance(authors, list) else str(authors)
+            search_text = f'{name} {author_str}'.strip()
+
             img_path = fields.get('product_photo_url', '')
             img = ''
             if img_path:
@@ -94,6 +103,7 @@ def search(query):
                 'link': link,
                 'image': img,
                 'in_stock': in_stock,
+                'search_text': search_text,
             })
 
     except Exception as e:

@@ -82,8 +82,8 @@ def filter_relevant_items(items, query):
         return items
     filtered = []
     for item in items:
-        name_lower = (item.get('name') or '').lower()
-        if any(word in name_lower for word in words):
+        text = ((item.get('name') or '') + ' ' + (item.get('search_text') or '')).lower()
+        if any(word in text for word in words):
             filtered.append(item)
     return filtered
 
